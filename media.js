@@ -56,7 +56,19 @@ function theme_media_file_rendered(variables) {
         );
         break;
       default:
-        console.log('theme_media_file_rendered() - unsupported filemime: ' + item.filemime);
+        // check of mimetipe 'video/*'
+        if ((/video\//).test(item.filemime)){
+          return theme('video', {
+            path: drupalgap_image_path(item.uri),
+            attributes: {
+              controls: '',
+              class: 'media-video'
+            }
+          });
+        } else {
+          console.log('theme_media_file_rendered() - unsupported filemime: ' + item.filemime);
+        }
+
         break;
     }
     return '';
