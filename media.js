@@ -65,6 +65,14 @@ function theme_media_file_rendered(variables) {
               class: 'media-video'
             }
           });
+        } else if ((/audio\//).test(item.filemime)) {
+          return theme('audio', {
+            path: drupalgap_image_path(item.uri),
+            attributes: {
+              controls: '',
+              class: 'media-audio'
+            }
+          });
         } else {
           console.log('theme_media_file_rendered() - unsupported filemime: ' + item.filemime);
         }
