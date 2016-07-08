@@ -70,7 +70,7 @@ function theme_media_file_rendered(variables) {
             path: drupalgap_image_path(item.uri),
             attributes: {
               controls: '',
-              class: 'media-video'
+              class: 'media-audio'
             }
           });
         } else {
