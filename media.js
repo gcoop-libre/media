@@ -38,11 +38,6 @@ function theme_media_file_rendered(variables) {
   try {
     var item = variables.item;
     switch (item.filemime) {
-      case 'image/jpeg':
-        return theme('image', {
-            path: drupalgap_image_path(item.uri)
-        });
-        break;
       case 'application/pdf':
         return bl(
           item.filename,
@@ -56,8 +51,16 @@ function theme_media_file_rendered(variables) {
         );
         break;
       default:
+        // check of mimetipe 'image/*'
+        if ((/image\//).test(item.filemime)) {
+          return theme(
+            'image_style', {
+              'style_name' : 'll_media_default',
+              'path' : item.uri
+            });
+        }
         // check of mimetipe 'video/*'
-        if ((/video\//).test(item.filemime)){
+        else if ((/video\//).test(item.filemime)){
           return theme('video', {
             path: drupalgap_image_path(item.uri),
             attributes: {
