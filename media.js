@@ -65,7 +65,10 @@ function theme_media_file_rendered(variables) {
             path: drupalgap_image_path(item.uri),
             attributes: {
               controls: '',
-              class: 'media-video'
+              class: 'media-video',
+              playsinline: '',
+              preload: 'metadata',
+              'webkit-playsinline': 'webkit-playsinline'
             }
           });
         } else if ((/audio\//).test(item.filemime)) {
