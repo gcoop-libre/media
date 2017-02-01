@@ -19,4 +19,17 @@ function image_field_widget_form(form, form_state, field, instance, langcode,
     console.log('image_field_widget_form - ' + error);
   }
 }
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function file_field_widget_form(form, form_state, field, instance, langcode, items, delta, element) {
+  try {
+    // replace core widget form
+    media_field_widget_form(form, form_state, field, instance, langcode, items, delta, element);
+  }
+  catch (error) {
+    console.log('file_field_widget_form - ' + error);
+  }
+}
 //# sourceURL=media.hooks.js
