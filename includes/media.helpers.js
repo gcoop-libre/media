@@ -95,7 +95,7 @@ function media_upload(button, media_source) {
 
       var fileOptions = new FileUploadOptions();
       fileOptions.fileKey = "files[file_1]";
-      fileOptions.fileName = fileURI.substr(fileURI.lastIndexOf('/') + 1);
+      fileOptions.fileName = fileURI.substr(fileURI.lastIndexOf('/') + 1).split('?')[0];
       fileOptions.headers = headers;
 
       var ft = new FileTransfer();
