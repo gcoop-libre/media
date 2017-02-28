@@ -30,6 +30,8 @@ function theme_media_file_rendered(variables) {
         else if ((/video\//).test(item.filemime)) {
           return theme('video', {
             path: drupalgap_image_path(item.uri),
+            fid: item.fid,
+            item: item,
             attributes: {
               controls: '',
               class: 'media-video',
