@@ -201,13 +201,8 @@ function media_upload(button, media_source) {
         }
       });
 
-      if (cardinality == 1) {
-        // replace media
-        $("#" + input_id + "-media-field").html(mediaHTML);
-      } else {
-        // add media
-        $("#" + input_id + "-media-field").append(mediaHTML);
-      }
+      // replace media
+      $("#" + input_id + "-media-field").html(mediaHTML);
       // scroll down;
       scrollToElement('#' + input_id + '-media-buttons', 500, -40);
 
