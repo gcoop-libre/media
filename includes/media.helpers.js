@@ -46,6 +46,14 @@ var MEDIA_TYPES = {
 function media_buttons(variables) {
   try {
     var html = '';
+
+    // Remove button
+    variables.attributes.onclick = 'media_remove_pressed(this);';
+    html += theme('media_remove_button', {
+      attributes: variables.attributes
+    });
+
+    // Upload button
     variables.attributes.onclick = 'media_upload_pressed(this);';
     variables.media_types.forEach(function (media_type) {
       html += theme('media_button', {
@@ -53,9 +61,28 @@ function media_buttons(variables) {
         attributes: variables.attributes
       });
     });
+
+    html += '<script type="text/javascript">media_verify_buttons("' + variables.attributes['data-input_id'] + '");</script>';
+
     return html;
   } catch (error) {
     console.log('media_buttons - ' + error);
+  }
+}
+
+/**
+ * Select which button must be shown
+ * @param {String} Input ID
+ */
+function media_verify_buttons(input_id) {
+  var buttons_id = input_id + '-media-buttons';
+
+  if ($.trim($('input#' + input_id).val()).length == 0) {
+    $('a[data-button_type=add]', '#' + buttons_id).css({ 'display':'block' });
+    $('a[data-button_type=remove]', '#' + buttons_id).css({ 'display':'none' });
+  } else {
+    $('a[data-button_type=add]', '#' + buttons_id).css({ 'display':'none' });
+    $('a[data-button_type=remove]', '#' + buttons_id).css({ 'display':'block' });
   }
 }
 
@@ -132,8 +159,8 @@ function media_upload(button, media_source) {
             } else {
               // drupal field with multiple values
               $("input#" + input_id).val(fid);
-              // remove media buttons
-              $('#' + input_id + '-media-buttons').remove();
+              // verify media buttons
+              media_verify_buttons(input_id);
               // add another field item
               _drupalgap_form_add_another_item(form_id, name, delta);
               $('.' + drupalgap_form_get_element_container_class(name).replace(/\s+/g, '.') + ' .description').remove();
@@ -257,6 +284,23 @@ function media_upload(button, media_source) {
   }
   catch (error) {
     console.log('media_upload - ' + error);
+  }
+}
+
+/**
+ * Delete Current Media
+ * @param {Object} button
+ */
+function media_remove_pressed(button) {
+  try {
+    var input_id = $(button).data("input_id");
+
+    $('input#' + input_id).val('');
+    $('#' + input_id + '-media-field').empty();
+
+    media_verify_buttons(input_id);
+  } catch (error) {
+    console.log('media_remove_pressed - ' + error);
   }
 }
 
