@@ -76,24 +76,36 @@ function media_field_widget_form(form, form_state, field, instance, langcode,
     if (typeof items[delta].item !== 'undefined' && items[delta].item.fid) {
       items[delta].value = items[delta].item.fid;
       media = theme('media_file_rendered', {item: items[delta].item});
-      // @TODO - show the remove button.
-    }
-    // add container for uploaded media
-    var html = '<div id="' + media_field_widget_media_containter_id(items[delta].id) + '"></div>' +
-      '<div id="' + items[delta].id + '-media-field-msg"></div>' +
-      '<div id="' + items[delta].id + '-media-field">' + media + '</div>' +
-      '<div id="' + items[delta].id + '-media-buttons">' +
-      media_buttons({
-        'media_types': media_types,
+      media += media_remove_button({
         attributes: {
           'data-input_id': items[delta].id,
-          'data-cardinality': field.cardinality,
-          'data-form_id': form.id,
-          'data-element_name': element.name,
-          'data-delta': delta,
+          'data-element_id': element.id,
+          'data-langcode': langcode,
+          'data-cardinality': field.cardinality
         }
-      }) +
-      '</div>';
+      });
+    }
+
+    // add container for uploaded media
+    var field_basename = media_field_widget_media_containter_id(items[delta].id);
+    var html = '<div id="' + field_basename + '">' +
+                 '<div id="' + field_basename + '-field-msg"></div>' +
+                 '<div id="' + field_basename + '-field">' + media + '</div>' +
+               '</div>';
+
+    if ((parseInt(delta) + 1) == field.cardinality) {
+      html += '<div id="' + element.id + '-upload-button">' +
+        media_upload_button({
+          'media_types': media_types,
+          attributes: {
+            'data-element_id': element.id,
+            'data-langcode': langcode,
+            'data-cardinality': field.cardinality
+          }
+        }) + '</div>';
+
+      html += '<script type="text/javascript">_media_field_widget_form_visibility(\'' + element.id + '\' , \'' + langcode + '\' , \'' + field.cardinality + '\');</script>';
+    }
 
     // Add html to the item's children.
     if (items[delta].children) {
@@ -106,10 +118,29 @@ function media_field_widget_form(form, form_state, field, instance, langcode,
     console.log('media_field_widget_form - ' + error);
   }
 }
-function media_field_widget_media_containter_id(id) {
-  return id + '-media';
+
+/**
+ * Verifies the visibility of the upload button
+ * @param {String} id
+ * @param {String} field_language
+ * @param {Number} field_cardinality
+ */
+function _media_field_widget_form_visibility(id, field_language, field_cardinality) {
+  $('#' + id + '-upload-button')
+    .hide();
+
+  for (var i = 0; i < field_cardinality; i++) {
+    var field_id = id + '-' + field_language + '-' + i + '-value';
+
+    if (empty($('#' + field_id).val())) {
+      $('#' + id + '-upload-button')
+        .show();
+      break;
+    }
+  }
 }
 //# sourceURL=media.fields.js
+
 /**
  * Created by lux on 21.01.2017.
  */
@@ -151,21 +182,34 @@ var MEDIA_TYPES = {
  */
 
 /**
- * Generate media upload buttons
+ * Generate media remove button
  * @param {Object} variables
  * @return {String}
  */
-function media_buttons(variables) {
+function media_remove_button(variables) {
   try {
     var html = '';
 
-    // Remove button
     variables.attributes.onclick = 'media_remove_pressed(this);';
     html += theme('media_remove_button', {
       attributes: variables.attributes
     });
 
-    // Upload button
+    return html;
+  } catch (error) {
+    console.log('media_remove_button - ' + error);
+  }
+}
+
+/**
+ * Generate media upload button
+ * @param {Object} variables
+ * @return {String}
+ */
+function media_upload_button(variables) {
+  try {
+    var html = '';
+
     variables.attributes.onclick = 'media_upload_pressed(this);';
     variables.media_types.forEach(function (media_type) {
       html += theme('media_button', {
@@ -174,27 +218,9 @@ function media_buttons(variables) {
       });
     });
 
-    html += '<script type="text/javascript">media_verify_buttons("' + variables.attributes['data-input_id'] + '");</script>';
-
     return html;
   } catch (error) {
     console.log('media_buttons - ' + error);
-  }
-}
-
-/**
- * Select which button must be shown
- * @param {String} Input ID
- */
-function media_verify_buttons(input_id) {
-  var buttons_id = input_id + '-media-buttons';
-
-  if ($.trim($('input#' + input_id).val()).length == 0) {
-    $('a[data-button_type=add]', '#' + buttons_id).css({ 'display':'block' });
-    $('a[data-button_type=remove]', '#' + buttons_id).css({ 'display':'none' });
-  } else {
-    $('a[data-button_type=add]', '#' + buttons_id).css({ 'display':'none' });
-    $('a[data-button_type=remove]', '#' + buttons_id).css({ 'display':'block' });
   }
 }
 
@@ -204,12 +230,25 @@ function media_verify_buttons(input_id) {
  */
 function media_upload(button, media_source) {
   try {
-    var input_id = $(button).data("input_id");
-    var cardinality = $(button).data("cardinality");
+    var id = $(button).data('element_id');
+    var field_language = $(button).data('langcode');
+    var field_cardinality = $(button).data('cardinality');
     var webform_component_type = $(button).data("webform_component_type");
-    var form_id = $(button).data("form_id");
-    var delta = $(button).data("delta");
-    var name = $(button).data("element_name");
+    var input_id = '';
+
+    // Search for an empty position within the field values
+    for (var i = 0; i < field_cardinality; i++) {
+      var field_id = id + '-' + field_language + '-' + i + '-value';
+
+      if (empty($('#' + field_id).val())) {
+        input_id = field_id;
+        break;
+      }
+    }
+
+    if (empty(input_id)) {
+      return;
+    }
 
     function set_camera_options(srcType, medType) {
       var options = {
@@ -259,7 +298,7 @@ function media_upload(button, media_source) {
           var fid = result[0].fid;
 
           // set fid in form
-          if (cardinality == 1) {
+          if (field_cardinality == 1) {
             // only one file allowed
             $("input#" + input_id).val(fid);
           } else {
@@ -271,13 +310,11 @@ function media_upload(button, media_source) {
             } else {
               // drupal field with multiple values
               $("input#" + input_id).val(fid);
-              // verify media buttons
-              media_verify_buttons(input_id);
-              // add another field item
-              _drupalgap_form_add_another_item(form_id, name, delta);
+
               $('.' + drupalgap_form_get_element_container_class(name).replace(/\s+/g, '.') + ' .description').remove();
             }
           }
+          _media_field_widget_form_visibility(id, field_language, field_cardinality);
 
           // check for additional files
           if (files.length > 0) {
@@ -339,11 +376,21 @@ function media_upload(button, media_source) {
             break;
         }
       });
+      mediaHTML += media_remove_button({
+        attributes: {
+          'data-input_id': input_id,
+          'data-element_id': id,
+          'data-langcode': field_language,
+          'data-cardinality': field_cardinality
+        }
+      });
+      mediaHTML += '<script type="text/javascript">$(\'a[data-input_id=' + input_id + '\').buttonMarkup();</script>';
 
       // replace media
-      $("#" + input_id + "-media-field").html(mediaHTML);
+      $('#' + media_field_widget_media_containter_id(input_id) + '-field').html(mediaHTML);
+
       // scroll down;
-      scrollToElement('#' + input_id + '-media-buttons', 500, -40);
+      scrollToElement('#' + id + '-upload-button', 500, -40);
 
       //upload media
       upload_media_file(mediaFullPaths);
@@ -362,7 +409,7 @@ function media_upload(button, media_source) {
         media_type = MEDIA_TYPES.IMAGE;
         // @TODO: use image cordova-plugin-imagepicker for selecting multiple pictures at once
         // as cordova-plugin-imagepicker shows currently ony albums, it's hard to find pictures
-        // if (cardinality == 1) {
+        // if (field_cardinality == 1) {
         //   cameraOptions = set_camera_options(Camera.PictureSourceType.PHOTOLIBRARY, Camera.MediaType.PICTURE);
         // } else {
         //   // multiple files allowed, use cordova-plugin-imagepicker
@@ -405,12 +452,17 @@ function media_upload(button, media_source) {
  */
 function media_remove_pressed(button) {
   try {
-    var input_id = $(button).data("input_id");
+    var input_id = $(button).data('input_id');
+    var field_basename = media_field_widget_media_containter_id(input_id);
+    var id = $(button).data('element_id');
+    var field_language = $(button).data('langcode');
+    var field_cardinality = $(button).data('cardinality');
 
     $('input#' + input_id).val('');
-    $('#' + input_id + '-media-field').empty();
+    $('#' + field_basename + '-field-msg').empty();
+    $('#' + field_basename + '-field').empty();
 
-    media_verify_buttons(input_id);
+    _media_field_widget_form_visibility(id, field_language, field_cardinality);
   } catch (error) {
     console.log('media_remove_pressed - ' + error);
   }
@@ -501,6 +553,10 @@ function file_assemble_form_state_into_field(entity_type, bundle,
   catch (error) {
     console.log('file_assemble_form_state_into_field - ' + error);
   }
+}
+
+function media_field_widget_media_containter_id(id) {
+  return id + '-media';
 }
 //# sourceURL=media.helpers.js
 
@@ -627,7 +683,6 @@ function theme_media_button(variables) {
         break;
     }
     variables.attributes['data-role'] = 'button';
-    variables.attributes['data-button_type'] = 'add';
     variables.attributes['href'] = '#';
     var html = '<a ' + drupalgap_attributes(variables.attributes) + '>' +
       variables.text +
@@ -649,7 +704,6 @@ function theme_media_remove_button(variables) {
     variables.attributes['data-icon'] = 'delete';
     variables.attributes['data-iconpos'] = 'right';
     variables.attributes['data-role'] = 'button';
-    variables.attributes['data-button_type'] = 'remove';
     variables.attributes['href'] = '#';
     var html = '<a ' + drupalgap_attributes(variables.attributes) + '>' +
                   t('Remove') +
