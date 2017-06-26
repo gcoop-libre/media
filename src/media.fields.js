@@ -76,24 +76,36 @@ function media_field_widget_form(form, form_state, field, instance, langcode,
     if (typeof items[delta].item !== 'undefined' && items[delta].item.fid) {
       items[delta].value = items[delta].item.fid;
       media = theme('media_file_rendered', {item: items[delta].item});
-      // @TODO - show the remove button.
-    }
-    // add container for uploaded media
-    var html = '<div id="' + media_field_widget_media_containter_id(items[delta].id) + '"></div>' +
-      '<div id="' + items[delta].id + '-media-field-msg"></div>' +
-      '<div id="' + items[delta].id + '-media-field">' + media + '</div>' +
-      '<div id="' + items[delta].id + '-media-buttons">' +
-      media_buttons({
-        'media_types': media_types,
+      media += media_remove_button({
         attributes: {
           'data-input_id': items[delta].id,
-          'data-cardinality': field.cardinality,
-          'data-form_id': form.id,
-          'data-element_name': element.name,
-          'data-delta': delta,
+          'data-element_id': element.id,
+          'data-langcode': langcode,
+          'data-cardinality': field.cardinality
         }
-      }) +
-      '</div>';
+      });
+    }
+
+    // add container for uploaded media
+    var field_basename = media_field_widget_media_containter_id(items[delta].id);
+    var html = '<div id="' + field_basename + '">' +
+                 '<div id="' + field_basename + '-field-msg"></div>' +
+                 '<div id="' + field_basename + '-field">' + media + '</div>' +
+               '</div>';
+
+    if ((parseInt(delta) + 1) == field.cardinality) {
+      html += '<div id="' + element.id + '-upload-button">' +
+        media_upload_button({
+          'media_types': media_types,
+          attributes: {
+            'data-element_id': element.id,
+            'data-langcode': langcode,
+            'data-cardinality': field.cardinality
+          }
+        }) + '</div>';
+
+      html += '<script type="text/javascript">_media_field_widget_form_visibility(\'' + element.id + '\' , \'' + langcode + '\' , \'' + field.cardinality + '\');</script>';
+    }
 
     // Add html to the item's children.
     if (items[delta].children) {
@@ -106,7 +118,25 @@ function media_field_widget_form(form, form_state, field, instance, langcode,
     console.log('media_field_widget_form - ' + error);
   }
 }
-function media_field_widget_media_containter_id(id) {
-  return id + '-media';
+
+/**
+ * Verifies the visibility of the upload button
+ * @param {String} id
+ * @param {String} field_language
+ * @param {Number} field_cardinality
+ */
+function _media_field_widget_form_visibility(id, field_language, field_cardinality) {
+  $('#' + id + '-upload-button')
+    .hide();
+
+  for (var i = 0; i < field_cardinality; i++) {
+    var field_id = id + '-' + field_language + '-' + i + '-value';
+
+    if (empty($('#' + field_id).val())) {
+      $('#' + id + '-upload-button')
+        .show();
+      break;
+    }
+  }
 }
 //# sourceURL=media.fields.js

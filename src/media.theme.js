@@ -85,7 +85,6 @@ function theme_media_button(variables) {
         break;
     }
     variables.attributes['data-role'] = 'button';
-    variables.attributes['data-button_type'] = 'add';
     variables.attributes['href'] = '#';
     var html = '<a ' + drupalgap_attributes(variables.attributes) + '>' +
       variables.text +
@@ -107,7 +106,6 @@ function theme_media_remove_button(variables) {
     variables.attributes['data-icon'] = 'delete';
     variables.attributes['data-iconpos'] = 'right';
     variables.attributes['data-role'] = 'button';
-    variables.attributes['data-button_type'] = 'remove';
     variables.attributes['href'] = '#';
     var html = '<a ' + drupalgap_attributes(variables.attributes) + '>' +
                   t('Remove') +
